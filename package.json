@@ -1,8 +1,11 @@
 {
-    "name": "polymarket_copy_trading_bot",
+    "name": "jerrix_polymarket_copy_bot",
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
+        "postinstall": "node src/scripts/postinstall.js",
+        "help": "ts-node src/scripts/help.ts",
+        "setup": "ts-node src/scripts/setup.ts",
         "build": "tsc",
         "start": "node dist/index.js",
         "dev": "ts-node src/index.ts",
@@ -30,14 +33,9 @@
         "scan-traders": "ts-node src/scripts/scanBestTraders.ts",
         "scan-markets": "ts-node src/scripts/scanTradersFromMarkets.ts",
         "aggregate": "ts-node src/scripts/aggregateResults.ts",
-        "audit": "ts-node src/scripts/auditCopyTradingAlgorithm.ts",
-        "audit-fixed": "ts-node src/scripts/auditCopyTradingAlgorithmFixed.ts",
+        "audit": "ts-node src/scripts/auditCopyTradingAlgorithmFixed.ts",
+        "audit-old": "ts-node src/scripts/auditCopyTradingAlgorithm.ts",
         "health-check": "ts-node src/scripts/healthCheck.ts",
-        "analyze": "ts-node src/scripts/analyzeAllTraders.ts",
-        "analyze:my-trades": "ts-node src/scripts/analyzeMyTrades.ts",
-        "analyze:all": "ts-node src/scripts/analyzeAllTraders.ts && ts-node src/scripts/analyzeMyTrades.ts",
-        "web": "cd web && npm run dev",
-        "web:build": "cd web && npm run build",
         "lint": "eslint .",
         "lint:fix": "eslint --fix .",
         "format": "prettier --write .",
@@ -45,15 +43,16 @@
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage"
     },
-    "keywords": [],
-    "author": "",
+    "keywords": ["polymarket", "copy-trading", "prediction-markets"],
+    "author": "Jerrix (@jerrix1)",
     "license": "ISC",
     "type": "commonjs",
-    "description": "",
+    "description": "Polymarket copy trading bot — mirrors trades from successful traders (e.g. gabagool22) with position sizing and real-time execution.",
     "devDependencies": {
         "@eslint/js": "^9.19.0",
         "@types/jest": "^29.5.14",
         "@types/node": "^22.10.10",
+        "@types/ws": "^8.18.1",
         "@typescript-eslint/eslint-plugin": "^8.22.0",
         "@typescript-eslint/parser": "^8.22.0",
         "eslint": "^9.19.0",
@@ -76,6 +75,5 @@
         "moment": "^2.30.1",
         "mongoose": "^8.9.5",
         "ora": "^8.2.0"
-    },
-    "packageManager": "yarn@4.10.3+sha512.c38cafb5c7bb273f3926d04e55e1d8c9dfa7d9c3ea1f36a4868fa028b9e5f72298f0b7f401ad5eb921749eb012eb1c3bb74bf7503df3ee43fd600d14a018266f"
+    }
 }

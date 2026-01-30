@@ -43,7 +43,8 @@ async function findRealProxyWallet() {
         const polygonscanUrl = `https://api.polygonscan.com/api?module=account&action=txlist&address=${eoaAddress}&startblock=0&endblock=99999999&page=1&offset=100&sort=desc&apikey=${polygonscanApiKey}`;
 
         try {
-            const data = await fetchData(polygonscanUrl);
+            const response = await fetch(polygonscanUrl);
+            const data = await response.json();
 
             if (data.status === '1' && data.result && data.result.length > 0) {
                 console.log(`   ✅ Найдено транзакций: ${data.result.length}\n`);

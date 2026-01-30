@@ -39,23 +39,23 @@ interface Position {
 }
 
 const checkMyStats = async () => {
-    console.log('🔍 Проверка статистики вашего кошелька на Polymarket\n');
-    console.log(`Кошелек: ${PROXY_WALLET}\n`);
+    console.log('🔍 Checking your wallet statistics on Polymarket\n');
+    console.log(`Wallet: ${PROXY_WALLET}\n`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     try {
-        // 1. Баланс USDC
-        console.log('💰 БАЛАНС USDC');
+        // 1. USDC Balance
+        console.log('💰 USDC BALANCE');
         const balance = await getMyBalance(PROXY_WALLET);
-        console.log(`   Доступно: $${balance.toFixed(2)}\n`);
+        console.log(`   Available: $${balance.toFixed(2)}\n`);
 
-        // 2. Открытые позиции
-        console.log('📊 ОТКРЫТЫЕ ПОЗИЦИИ');
+        // 2. Open Positions
+        console.log('📊 OPEN POSITIONS');
         const positionsUrl = `https://data-api.polymarket.com/positions?user=${PROXY_WALLET}`;
         const positions: Position[] = await fetchData(positionsUrl);
 
         if (positions && positions.length > 0) {
-            console.log(`   Всего позиций: ${positions.length}\n`);
+            console.log(`   Total positions: ${positions.length}\n`);
 
             let totalValue = 0;
             let totalInitialValue = 0;
@@ -69,15 +69,15 @@ const checkMyStats = async () => {
                 totalRealizedPnl += pos.realizedPnl || 0;
             });
 
-            console.log(`   💵 Текущая стоимость: $${totalValue.toFixed(2)}`);
-            console.log(`   💵 Начальная стоимость: $${totalInitialValue.toFixed(2)}`);
+            console.log(`   💵 Current value: $${totalValue.toFixed(2)}`);
+            console.log(`   💵 Initial value: $${totalInitialValue.toFixed(2)}`);
             console.log(
-                `   📈 Нереализованная прибыль: $${totalUnrealizedPnl.toFixed(2)} (${((totalUnrealizedPnl / totalInitialValue) * 100).toFixed(2)}%)`
+                `   📈 Unrealized P&L: $${totalUnrealizedPnl.toFixed(2)} (${((totalUnrealizedPnl / totalInitialValue) * 100).toFixed(2)}%)`
             );
-            console.log(`   ✅ Реализованная прибыль: $${totalRealizedPnl.toFixed(2)}\n`);
+            console.log(`   ✅ Realized P&L: $${totalRealizedPnl.toFixed(2)}\n`);
 
-            // Топ 5 позиций по прибыли
-            console.log('   🏆 Топ-5 позиций по прибыли:\n');
+            // Top 5 positions by profit
+            console.log('   🏆 Top-5 positions by profit:\n');
             const topPositions = [...positions]
                 .sort((a, b) => (b.percentPnl || 0) - (a.percentPnl || 0))
                 .slice(0, 5);
@@ -87,59 +87,59 @@ const checkMyStats = async () => {
                 console.log(`   ${idx + 1}. ${pnlSign} ${pos.title || 'Unknown'}`);
                 console.log(`      ${pos.outcome || 'N/A'}`);
                 console.log(
-                    `      Размер: ${pos.size.toFixed(2)} токенов @ $${pos.avgPrice.toFixed(3)}`
+                    `      Size: ${pos.size.toFixed(2)} tokens @ $${pos.avgPrice.toFixed(3)}`
                 );
                 console.log(
                     `      P&L: $${(pos.cashPnl || 0).toFixed(2)} (${(pos.percentPnl || 0).toFixed(2)}%)`
                 );
-                console.log(`      Текущая цена: $${pos.curPrice.toFixed(3)}`);
+                console.log(`      Current price: $${pos.curPrice.toFixed(3)}`);
                 if (pos.slug) {
                     console.log(`      📍 https://polymarket.com/event/${pos.slug}`);
                 }
                 console.log('');
             });
         } else {
-            console.log('   ❌ Открытых позиций не найдено\n');
+            console.log('   ❌ No open positions found\n');
         }
 
-        // 3. История сделок (последние 50)
+        // 3. Trade History (last 50)
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        console.log('📜 ИСТОРИЯ СДЕЛОК (последние 20)\n');
+        console.log('📜 TRADE HISTORY (last 20)\n');
         const activityUrl = `https://data-api.polymarket.com/activity?user=${PROXY_WALLET}&type=TRADE`;
         const activities: Activity[] = await fetchData(activityUrl);
 
         if (activities && activities.length > 0) {
-            console.log(`   Всего сделок в API: ${activities.length}\n`);
+            console.log(`   Total trades in API: ${activities.length}\n`);
 
-            // Статистика по сделкам
+            // Trade statistics
             const buyTrades = activities.filter((a) => a.side === 'BUY');
             const sellTrades = activities.filter((a) => a.side === 'SELL');
             const totalBuyVolume = buyTrades.reduce((sum, t) => sum + t.usdcSize, 0);
             const totalSellVolume = sellTrades.reduce((sum, t) => sum + t.usdcSize, 0);
 
-            console.log('   📊 Статистика сделок:');
+            console.log('   📊 Trade statistics:');
             console.log(
-                `      • Покупок: ${buyTrades.length} (объем: $${totalBuyVolume.toFixed(2)})`
+                `      • Buys: ${buyTrades.length} (volume: $${totalBuyVolume.toFixed(2)})`
             );
             console.log(
-                `      • Продаж: ${sellTrades.length} (объем: $${totalSellVolume.toFixed(2)})`
+                `      • Sells: ${sellTrades.length} (volume: $${totalSellVolume.toFixed(2)})`
             );
-            console.log(`      • Всего объем: $${(totalBuyVolume + totalSellVolume).toFixed(2)}\n`);
+            console.log(`      • Total volume: $${(totalBuyVolume + totalSellVolume).toFixed(2)}\n`);
 
-            // Последние 20 сделок
+            // Last 20 trades
             const recentTrades = activities.slice(0, 20);
-            console.log('   📝 Последние 20 сделок:\n');
+            console.log('   📝 Last 20 trades:\n');
 
             recentTrades.forEach((trade, idx) => {
                 const date = new Date(trade.timestamp * 1000);
                 const sideIcon = trade.side === 'BUY' ? '🟢' : '🔴';
                 console.log(
-                    `   ${idx + 1}. ${sideIcon} ${trade.side} - ${date.toLocaleString('ru-RU')}`
+                    `   ${idx + 1}. ${sideIcon} ${trade.side} - ${date.toLocaleString('en-US')}`
                 );
                 console.log(`      ${trade.title || 'Unknown Market'}`);
                 console.log(`      ${trade.outcome || 'N/A'}`);
                 console.log(
-                    `      Объем: $${trade.usdcSize.toFixed(2)} @ $${trade.price.toFixed(3)}`
+                    `      Volume: $${trade.usdcSize.toFixed(2)} @ $${trade.price.toFixed(3)}`
                 );
                 console.log(
                     `      TX: ${trade.transactionHash.slice(0, 10)}...${trade.transactionHash.slice(-8)}`
@@ -148,40 +148,40 @@ const checkMyStats = async () => {
                 console.log('');
             });
         } else {
-            console.log('   ❌ История сделок не найдена\n');
+            console.log('   ❌ Trade history not found\n');
         }
 
-        // 4. Почему нет графиков P&L
+        // 4. Why no P&L charts
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        console.log('❓ ПОЧЕМУ НЕТ ГРАФИКОВ P&L НА POLYMARKET?\n');
-        console.log('   Графики Profit/Loss на Polymarket показывают только РЕАЛИЗОВАННУЮ');
-        console.log('   прибыль (закрытые позиции). Вот почему у вас показывает $0.00:\n');
+        console.log('❓ WHY NO P&L CHARTS ON POLYMARKET?\n');
+        console.log('   Profit/Loss charts on Polymarket only show REALIZED');
+        console.log('   profit (closed positions). This is why it shows $0.00:\n');
 
         if (positions && positions.length > 0) {
             const totalRealizedPnl = positions.reduce((sum, p) => sum + (p.realizedPnl || 0), 0);
             const totalUnrealizedPnl = positions.reduce((sum, p) => sum + (p.cashPnl || 0), 0);
 
-            console.log('   ✅ Реализованная прибыль (закрытые позиции):');
-            console.log(`      → $${totalRealizedPnl.toFixed(2)} ← ЭТО отображается на графике\n`);
+            console.log('   ✅ Realized P&L (closed positions):');
+            console.log(`      → $${totalRealizedPnl.toFixed(2)} ← THIS is displayed on the chart\n`);
 
-            console.log('   📊 Нереализованная прибыль (открытые позиции):');
+            console.log('   📊 Unrealized P&L (open positions):');
             console.log(
-                `      → $${totalUnrealizedPnl.toFixed(2)} ← ЭТО НЕ отображается на графике\n`
+                `      → $${totalUnrealizedPnl.toFixed(2)} ← THIS is NOT displayed on the chart\n`
             );
 
             if (totalRealizedPnl === 0) {
-                console.log('   💡 Решение: Чтобы появились графики, нужно:');
-                console.log('      1. Закрыть несколько позиций с прибылью');
-                console.log('      2. Подождать 5-10 минут для обновления API Polymarket');
-                console.log('      3. График P&L начнет отображать данные\n');
+                console.log('   💡 Solution: To see charts, you need to:');
+                console.log('      1. Close several positions with profit');
+                console.log('      2. Wait 5-10 minutes for Polymarket API to update');
+                console.log('      3. P&L chart will start displaying data\n');
             }
         }
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        console.log('✅ Проверка завершена!\n');
-        console.log(`📱 Ваш профиль: https://polymarket.com/profile/${PROXY_WALLET}\n`);
+        console.log('✅ Check completed!\n');
+        console.log(`📱 Your profile: https://polymarket.com/profile/${PROXY_WALLET}\n`);
     } catch (error) {
-        console.error('❌ Ошибка при получении данных:', error);
+        console.error('❌ Error fetching data:', error);
     }
 };
 

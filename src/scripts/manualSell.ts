@@ -2,7 +2,6 @@ import { ethers } from 'ethers';
 import { AssetType, ClobClient, OrderType, Side } from '@polymarket/clob-client';
 import { SignatureType } from '@polymarket/order-utils';
 import { ENV } from '../config/env';
-import fetchData from '../utils/fetchData';
 
 const PROXY_WALLET = ENV.PROXY_WALLET;
 const PRIVATE_KEY = ENV.PRIVATE_KEY;
@@ -11,7 +10,7 @@ const RPC_URL = ENV.RPC_URL;
 const POLYGON_CHAIN_ID = 137;
 const RETRY_LIMIT = ENV.RETRY_LIMIT;
 
-// ABI для получения информации о рынке
+// Market search query
 const MARKET_SEARCH_QUERY = 'Maduro out in 2025';
 const SELL_PERCENTAGE = 0.7; // 70%
 
@@ -83,9 +82,11 @@ const createClobClient = async (
 
 const fetchPositions = async (): Promise<Position[]> => {
     const url = `https://data-api.polymarket.com/positions?user=${PROXY_WALLET}`;
-    const myPositions = await fetchData(url);
-    console.log(`Fetched ${myPositions.length} positions from Polymarket API`);
-    return myPositions;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch positions: ${response.statusText}`);
+    }
+    return response.json();
 };
 
 const findMatchingPosition = (positions: Position[], searchQuery: string): Position | undefined => {
@@ -122,7 +123,7 @@ const sellPosition = async (clobClient: ClobClient, position: Position, sellSize
 
     while (remaining > 0 && retry < RETRY_LIMIT) {
         try {
-            // Получаем текущую книгу заказов
+            // Get current order book
             const orderBook = await clobClient.getOrderBook(position.asset);
 
             if (!orderBook.bids || orderBook.bids.length === 0) {
@@ -130,14 +131,14 @@ const sellPosition = async (clobClient: ClobClient, position: Position, sellSize
                 break;
             }
 
-            // Находим лучший бид
+            // Find best bid
             const maxPriceBid = orderBook.bids.reduce((max, bid) => {
                 return parseFloat(bid.price) > parseFloat(max.price) ? bid : max;
             }, orderBook.bids[0]);
 
             console.log(`📊 Best bid: ${maxPriceBid.size} tokens @ $${maxPriceBid.price}`);
 
-            // Определяем размер ордера
+            // Determine order size
             let orderAmount: number;
             if (remaining <= parseFloat(maxPriceBid.size)) {
                 orderAmount = remaining;
@@ -145,7 +146,7 @@ const sellPosition = async (clobClient: ClobClient, position: Position, sellSize
                 orderAmount = parseFloat(maxPriceBid.size);
             }
 
-            // Создаем ордер на продажу
+            // Create sell order
             const orderArgs = {
                 side: Side.SELL,
                 tokenID: position.asset,
@@ -246,18 +247,18 @@ async function main() {
     console.log(`📊 Sell percentage: ${(SELL_PERCENTAGE * 100).toFixed(0)}%\n`);
 
     try {
-        // Создаем провайдера и клиента
+        // Create provider and client
         const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
         const clobClient = await createClobClient(provider);
 
         console.log('✅ Connected to Polymarket\n');
 
-        // Получаем все позиции
+        // Get all positions
         console.log('📥 Fetching positions...');
         const positions = await fetchPositions();
         console.log(`Found ${positions.length} position(s)\n`);
 
-        // Ищем нужную позицию
+        // Find matching position
         const position = findMatchingPosition(positions, MARKET_SEARCH_QUERY);
 
         if (!position) {
@@ -278,7 +279,7 @@ async function main() {
         console.log(`📌 Average price: $${position.avgPrice.toFixed(4)}`);
         console.log(`📌 Current value: $${position.currentValue.toFixed(2)}`);
 
-        // Вычисляем размер для продажи
+        // Calculate sell size
         const sellSize = position.size * SELL_PERCENTAGE;
 
         if (sellSize < 1.0) {
@@ -289,7 +290,7 @@ async function main() {
             process.exit(1);
         }
 
-        // Продаем позицию
+        // Sell position
         await sellPosition(clobClient, position, sellSize);
 
         console.log('\n✅ Script completed!');

@@ -22,20 +22,20 @@ interface Position {
 }
 
 async function checkPositions() {
-    console.log('\n📊 ТЕКУЩИЕ ПОЗИЦИИ:\n');
+    console.log('\n📊 CURRENT POSITIONS:\n');
 
     const positions: Position[] = await fetchData(
         `https://data-api.polymarket.com/positions?user=${PROXY_WALLET}`
     );
 
     if (!positions || positions.length === 0) {
-        console.log('❌ Нет открытых позиций');
+        console.log('❌ No open positions');
         return;
     }
 
-    console.log(`✅ Найдено позиций: ${positions.length}\n`);
+    console.log(`✅ Found positions: ${positions.length}\n`);
 
-    // Сортируем по текущей стоимости
+    // Sort by current value
     const sorted = positions.sort((a, b) => b.currentValue - a.currentValue);
 
     let totalValue = 0;
@@ -57,24 +57,24 @@ async function checkPositions() {
     }
 
     console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    console.log(`💰 ОБЩАЯ ТЕКУЩАЯ СТОИМОСТЬ: $${totalValue.toFixed(2)}`);
+    console.log(`💰 TOTAL CURRENT VALUE: $${totalValue.toFixed(2)}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
 
-    // Определяем большие позиции (больше $5)
+    // Identify large positions (greater than $5)
     const largePositions = sorted.filter((p) => p.currentValue > 5);
 
     if (largePositions.length > 0) {
-        console.log(`\n🎯 БОЛЬШИЕ ПОЗИЦИИ (> $5): ${largePositions.length}\n`);
+        console.log(`\n🎯 LARGE POSITIONS (> $5): ${largePositions.length}\n`);
         for (const pos of largePositions) {
             console.log(
                 `• ${pos.title || 'Unknown'} [${pos.outcome}]: $${pos.currentValue.toFixed(2)} (${pos.size.toFixed(2)} shares @ $${pos.curPrice.toFixed(4)})`
             );
         }
 
-        console.log(`\n💡 Чтобы продать 80% этих позиций, используйте:\n`);
+        console.log(`\n💡 To sell 80% of these positions, use:\n`);
         console.log(`   npm run manual-sell\n`);
 
-        console.log(`📋 Данные для продажи:\n`);
+        console.log(`📋 Data for selling:\n`);
         for (const pos of largePositions) {
             const sellSize = Math.floor(pos.size * 0.8);
             console.log(`   Asset ID: ${pos.asset}`);
@@ -83,7 +83,7 @@ async function checkPositions() {
             console.log(``);
         }
     } else {
-        console.log('\n✅ Нет больших позиций (> $5)');
+        console.log('\n✅ No large positions (> $5)');
     }
 }
 

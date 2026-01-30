@@ -23,20 +23,20 @@ const main = async () => {
     const activities: Activity[] = await fetchData(url);
 
     if (!Array.isArray(activities) || activities.length === 0) {
-        console.log('Нет данных о сделках');
+        console.log('No trade data available');
         return;
     }
 
-    // Redemption закончилось в 18:14:16 UTC (31 октября 2025)
+    // Redemption ended at 18:14:16 UTC (October 31, 2025)
     const redemptionEndTime = new Date('2025-10-31T18:14:16Z').getTime() / 1000;
 
     console.log('═══════════════════════════════════════════════════════════════');
-    console.log('📋 ЗАКРЫТЫЕ ПОЗИЦИИ (Погашено 31 октября 2025 в 18:00-18:14)');
+    console.log('📋 CLOSED POSITIONS (Redeemed October 31, 2025 at 18:00-18:14)');
     console.log('═══════════════════════════════════════════════════════════════\n');
-    console.log('💰 ВСЕГО ПОЛУЧЕНО ОТ ПОГАШЕНИЯ: $66.37 USDC\n');
+    console.log('💰 TOTAL RECEIVED FROM REDEMPTION: $66.37 USDC\n');
 
     console.log('═══════════════════════════════════════════════════════════════');
-    console.log('🛒 ПОКУПКИ ПОСЛЕ ПОГАШЕНИЯ (после 18:14 UTC 31 октября)');
+    console.log('🛒 PURCHASES AFTER REDEMPTION (after 18:14 UTC October 31)');
     console.log('═══════════════════════════════════════════════════════════════\n');
 
     const tradesAfterRedemption = activities.filter(
@@ -44,8 +44,8 @@ const main = async () => {
     );
 
     if (tradesAfterRedemption.length === 0) {
-        console.log('✅ Покупок после погашения не было!\n');
-        console.log('Значит, средства должны быть на балансе.');
+        console.log('✅ No purchases after redemption!\n');
+        console.log('This means funds should be in the balance.');
         return;
     }
 
@@ -56,29 +56,29 @@ const main = async () => {
         const value = trade.usdcSize;
         totalSpent += value;
 
-        console.log(`${i + 1}. 🟢 КУПИЛ: ${trade.title || trade.market || 'Unknown'}`);
-        console.log(`   💸 Потрачено: $${value.toFixed(2)}`);
-        console.log(`   📊 Размер: ${trade.size.toFixed(2)} токенов @ $${trade.price.toFixed(4)}`);
-        console.log(`   📅 Дата: ${date.toLocaleString('ru-RU')}`);
+        console.log(`${i + 1}. 🟢 BOUGHT: ${trade.title || trade.market || 'Unknown'}`);
+        console.log(`   💸 Spent: $${value.toFixed(2)}`);
+        console.log(`   📊 Size: ${trade.size.toFixed(2)} tokens @ $${trade.price.toFixed(4)}`);
+        console.log(`   📅 Date: ${date.toLocaleString('en-US')}`);
         console.log(
             `   🔗 TX: https://polygonscan.com/tx/${trade.transactionHash.substring(0, 20)}...\n`
         );
     });
 
     console.log('═══════════════════════════════════════════════════════════════');
-    console.log('📊 ИТОГО ПОКУПОК ПОСЛЕ ПОГАШЕНИЯ:');
-    console.log(`   Количество сделок: ${tradesAfterRedemption.length}`);
-    console.log(`   💸 ПОТРАЧЕНО: $${totalSpent.toFixed(2)} USDC`);
+    console.log('📊 TOTAL PURCHASES AFTER REDEMPTION:');
+    console.log(`   Number of trades: ${tradesAfterRedemption.length}`);
+    console.log(`   💸 SPENT: $${totalSpent.toFixed(2)} USDC`);
     console.log('═══════════════════════════════════════════════════════════════\n');
 
-    console.log('💡 ОБЪЯСНЕНИЕ КУДА УШЛИ ДЕНЬГИ:\n');
-    console.log(`   ✅ Получено от погашения: +$66.37`);
-    console.log(`   ❌ Потрачено на новые покупки: -$${totalSpent.toFixed(2)}`);
-    console.log(`   📊 Изменение баланса: $${(66.37 - totalSpent).toFixed(2)}`);
+    console.log('💡 EXPLANATION OF WHERE THE MONEY WENT:\n');
+    console.log(`   ✅ Received from redemption: +$66.37`);
+    console.log(`   ❌ Spent on new purchases: -$${totalSpent.toFixed(2)}`);
+    console.log(`   📊 Balance change: $${(66.37 - totalSpent).toFixed(2)}`);
     console.log('\n═══════════════════════════════════════════════════════════════\n');
 
-    // Показываем последние продажи тоже
-    console.log('💵 ПОСЛЕДНИЕ ПРОДАЖИ:\n');
+    // Show recent sales too
+    console.log('💵 RECENT SALES:\n');
     const recentSells = activities.filter((t) => t.side === 'SELL').slice(0, 10);
 
     let totalSold = 0;
@@ -87,13 +87,13 @@ const main = async () => {
         const value = trade.usdcSize;
         totalSold += value;
 
-        console.log(`${i + 1}. 🔴 ПРОДАЛ: ${trade.title || trade.market || 'Unknown'}`);
-        console.log(`   💰 Получено: $${value.toFixed(2)}`);
-        console.log(`   📅 Дата: ${date.toLocaleString('ru-RU')}\n`);
+        console.log(`${i + 1}. 🔴 SOLD: ${trade.title || trade.market || 'Unknown'}`);
+        console.log(`   💰 Received: $${value.toFixed(2)}`);
+        console.log(`   📅 Date: ${date.toLocaleString('en-US')}\n`);
     });
 
     console.log('═══════════════════════════════════════════════════════════════');
-    console.log(`💵 Продано за последние сделки: $${totalSold.toFixed(2)}`);
+    console.log(`💵 Sold in recent trades: $${totalSold.toFixed(2)}`);
     console.log('═══════════════════════════════════════════════════════════════');
 };
 

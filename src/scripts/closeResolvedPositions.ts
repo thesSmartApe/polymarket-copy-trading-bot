@@ -117,7 +117,7 @@ const sellEntirePosition = async (
             break;
         }
 
-        const bestBid = orderBook.bids.reduce((max, bid) => {
+        const bestBid = orderBook.bids.reduce((max: any, bid: any) => {
             return parseFloat(bid.price) > parseFloat(max.price) ? bid : max;
         }, orderBook.bids[0]);
 
@@ -197,7 +197,7 @@ const loadPositions = async (address: string): Promise<Position[]> => {
 };
 
 const logPositionHeader = (position: Position, index: number, total: number) => {
-    const status = position.curPrice >= RESOLVED_HIGH ? '🎉 ПОБЕДА' : '❌ ПРОИГРЫШ';
+    const status = position.curPrice >= RESOLVED_HIGH ? '🎉 WIN' : '❌ LOSS';
     console.log(
         `\n${index + 1}/${total} ▶ ${status} | ${position.title || position.slug || position.asset}`
     );
@@ -211,16 +211,16 @@ const logPositionHeader = (position: Position, index: number, total: number) => 
         `   Current price: $${position.curPrice.toFixed(4)} (Est. value: $${position.currentValue.toFixed(2)})`
     );
     if (position.redeemable) {
-        console.log('   ℹ️  Market is redeemable — можно погасить напрямую');
+        console.log('   ℹ️  Market is redeemable — can be redeemed directly');
     }
 };
 
 const main = async () => {
-    console.log('🚀 Закрытие разрешённых позиций (resolved positions)');
+    console.log('🚀 Closing resolved positions');
     console.log('════════════════════════════════════════════════════');
     console.log(`Wallet: ${PROXY_WALLET}`);
-    console.log(`Порог для победы: цена >= $${RESOLVED_HIGH}`);
-    console.log(`Порог для проигрыша: цена <= $${RESOLVED_LOW}`);
+    console.log(`Win threshold: price >= $${RESOLVED_HIGH}`);
+    console.log(`Loss threshold: price <= $${RESOLVED_LOW}`);
 
     const clobClient = await createClobClient();
     console.log('✅ Connected to Polymarket CLOB');
@@ -241,28 +241,28 @@ const main = async () => {
         (pos) => pos.curPrice > RESOLVED_LOW && pos.curPrice < RESOLVED_HIGH
     );
 
-    console.log(`\n📊 Статистика позиций:`);
-    console.log(`   Всего позиций: ${allPositions.length}`);
-    console.log(`   ✅ Разрешённые (будут закрыты): ${resolvedPositions.length}`);
-    console.log(`   ⏳ Активные (не трогаем): ${activePositions.length}`);
+    console.log(`\n📊 Position statistics:`);
+    console.log(`   Total positions: ${allPositions.length}`);
+    console.log(`   ✅ Resolved (will be closed): ${resolvedPositions.length}`);
+    console.log(`   ⏳ Active (not touching): ${activePositions.length}`);
 
     if (activePositions.length > 0) {
-        console.log(`\n⏳ АКТИВНЫЕ ПОЗИЦИИ (НЕ ТРОГАЕМ):`);
+        console.log(`\n⏳ ACTIVE POSITIONS (NOT TOUCHING):`);
         activePositions.forEach((pos, i) => {
             console.log(`   ${i + 1}. ${pos.title || pos.slug || 'Unknown'}`);
             console.log(`      Outcome: ${pos.outcome || 'N/A'}`);
-            console.log(`      Размер: ${pos.size.toFixed(2)} токенов`);
-            console.log(`      Текущая цена: $${pos.curPrice.toFixed(4)}`);
-            console.log(`      Стоимость: $${pos.currentValue.toFixed(2)}`);
+            console.log(`      Size: ${pos.size.toFixed(2)} tokens`);
+            console.log(`      Current price: $${pos.curPrice.toFixed(4)}`);
+            console.log(`      Value: $${pos.currentValue.toFixed(2)}`);
         });
     }
 
     if (resolvedPositions.length === 0) {
-        console.log('\n✅ Все позиции всё ещё активны. Нечего закрывать.');
+        console.log('\n✅ All positions are still active. Nothing to close.');
         return;
     }
 
-    console.log(`\n🔄 Закрываем ${resolvedPositions.length} разрешённых позиций...`);
+    console.log(`\n🔄 Closing ${resolvedPositions.length} resolved positions...`);
 
     let totalTokens = 0;
     let totalProceeds = 0;
@@ -281,10 +281,10 @@ const main = async () => {
     }
 
     console.log('\n════════════════════════════════════════════════════');
-    console.log('✅ Итог закрытия разрешённых позиций');
-    console.log(`Рынков обработано: ${resolvedPositions.length}`);
-    console.log(`Токенов продано: ${totalTokens.toFixed(2)}`);
-    console.log(`USDC получено (приблизительно): $${totalProceeds.toFixed(2)}`);
+    console.log('✅ Summary of closing resolved positions');
+    console.log(`Markets processed: ${resolvedPositions.length}`);
+    console.log(`Tokens sold: ${totalTokens.toFixed(2)}`);
+    console.log(`USDC received (approximately): $${totalProceeds.toFixed(2)}`);
     console.log('════════════════════════════════════════════════════\n');
 };
 

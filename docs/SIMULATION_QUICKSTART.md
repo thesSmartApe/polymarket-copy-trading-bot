@@ -205,7 +205,7 @@ rm -rf trader_data_cache/
 ## 📁 Структура файлов
 
 ```
-polymarket-copy-trading-bot-v1/
+polymarket-copy-trading-bot/
 ├── simulation_results/          # Результаты симуляций (JSON)
 │   ├── new_logic_0x7c3d..._30d_std_m1p0_2025-10-22.json
 │   └── ...

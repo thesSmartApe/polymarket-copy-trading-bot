@@ -196,6 +196,7 @@ const postOrder = async (
         }
 
         let remaining = orderCalc.finalAmount;
+        let availableBalance = my_balance; // Track remaining balance after orders
 
         let retry = 0;
         let abortDueToFunds = false;
@@ -214,11 +215,11 @@ const postOrder = async (
             }, orderBook.asks[0]);
 
             Logger.info(`Best ask: ${minPriceAsk.size} @ $${minPriceAsk.price}`);
-            if (parseFloat(minPriceAsk.price) - 0.05 > trade.price) {
-                Logger.warning('Price slippage too high - skipping trade');
-                await UserActivity.updateOne({ _id: trade._id }, { bot: true });
-                break;
-            }
+            // if (parseFloat(minPriceAsk.price) - 0.05 > trade.price) {
+            //     Logger.warning('Price slippage too high - skipping trade');
+            //     await UserActivity.updateOne({ _id: trade._id }, { bot: true });
+            //     break;
+            // }
 
             // Check if remaining amount is below minimum before creating order
             if (remaining < MIN_ORDER_SIZE_USD) {
@@ -233,7 +234,28 @@ const postOrder = async (
             }
 
             const maxOrderSize = parseFloat(minPriceAsk.size) * parseFloat(minPriceAsk.price);
-            const orderSize = Math.min(remaining, maxOrderSize);
+            let orderSize = Math.min(remaining, maxOrderSize);
+
+            // Ensure minimum order size is 1 USDC
+            if (orderSize < MIN_ORDER_SIZE_USD) {
+                Logger.info(
+                    `Order size ($${orderSize.toFixed(2)}) below minimum ($${MIN_ORDER_SIZE_USD}) - completing trade`
+                );
+                await UserActivity.updateOne(
+                    { _id: trade._id },
+                    { bot: true, myBoughtSize: totalBoughtTokens }
+                );
+                break;
+            }
+
+            // Check if balance is sufficient for the order
+            if (availableBalance < orderSize) {
+                Logger.warning(
+                    `Insufficient balance: Need $${orderSize.toFixed(2)} but only have $${availableBalance.toFixed(2)}`
+                );
+                abortDueToFunds = true;
+                break;
+            }
 
             const order_arges = {
                 side: Side.BUY,
@@ -243,11 +265,13 @@ const postOrder = async (
             };
 
             Logger.info(
-                `Creating order: $${orderSize.toFixed(2)} @ $${minPriceAsk.price} (Balance: $${my_balance.toFixed(2)})`
+                `Creating order: $${orderSize.toFixed(2)} @ $${minPriceAsk.price} (Balance: $${availableBalance.toFixed(2)})`
             );
             // Order args logged internally
             const signedOrder = await clobClient.createMarketOrder(order_arges);
+            console.log("🚀 ~ postOrder ~ signedOrder:", signedOrder)
             const resp = await clobClient.postOrder(signedOrder, OrderType.FOK);
+            console.log("🚀 ~ postOrder ~ resp:", resp)
             if (resp.success === true) {
                 retry = 0;
                 const tokensBought = order_arges.amount / order_arges.price;
@@ -257,6 +281,8 @@ const postOrder = async (
                     `Bought $${order_arges.amount.toFixed(2)} at $${order_arges.price} (${tokensBought.toFixed(2)} tokens)`
                 );
                 remaining -= order_arges.amount;
+                // Update balance after successful order
+                availableBalance -= order_arges.amount;
             } else {
                 const errorMessage = extractOrderError(resp);
                 if (isInsufficientBalanceOrAllowanceError(errorMessage)) {

@@ -21,28 +21,28 @@ interface Activity {
 }
 
 const checkProxyWallet = async () => {
-    console.log('🔍 ПРОВЕРКА PROXY WALLET И ОСНОВНОГО КОШЕЛЬКА\n');
+    console.log('🔍 CHECKING PROXY WALLET AND MAIN WALLET\n');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     try {
-        // 1. Получаем EOA (основной кошелек) из приватного ключа
+        // 1. Get EOA (main wallet) from private key
         const wallet = new ethers.Wallet(PRIVATE_KEY);
         const eoaAddress = wallet.address;
 
-        console.log('📍 ВАШИ АДРЕСА:\n');
-        console.log(`   EOA (Основной кошелек):  ${eoaAddress}`);
-        console.log(`   Proxy Wallet (Контракт): ${PROXY_WALLET}\n`);
+        console.log('📍 YOUR ADDRESSES:\n');
+        console.log(`   EOA (Main wallet):  ${eoaAddress}`);
+        console.log(`   Proxy Wallet (Contract): ${PROXY_WALLET}\n`);
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-        // 2. Проверяем активность на EOA
-        console.log('🔎 ПРОВЕРКА АКТИВНОСТИ НА ОСНОВНОМ КОШЕЛЬКЕ (EOA):\n');
+        // 2. Check activity on EOA
+        console.log('🔎 CHECKING ACTIVITY ON MAIN WALLET (EOA):\n');
         const eoaActivityUrl = `https://data-api.polymarket.com/activity?user=${eoaAddress}&type=TRADE`;
         const eoaActivities: Activity[] = await fetchData(eoaActivityUrl);
 
-        console.log(`   Адрес: ${eoaAddress}`);
-        console.log(`   Сделок: ${eoaActivities?.length || 0}`);
-        console.log(`   Профиль: https://polymarket.com/profile/${eoaAddress}\n`);
+        console.log(`   Address: ${eoaAddress}`);
+        console.log(`   Trades: ${eoaActivities?.length || 0}`);
+        console.log(`   Profile: https://polymarket.com/profile/${eoaAddress}\n`);
 
         if (eoaActivities && eoaActivities.length > 0) {
             const buyTrades = eoaActivities.filter((a) => a.side === 'BUY');
@@ -50,13 +50,13 @@ const checkProxyWallet = async () => {
             const totalBuyVolume = buyTrades.reduce((sum, t) => sum + t.usdcSize, 0);
             const totalSellVolume = sellTrades.reduce((sum, t) => sum + t.usdcSize, 0);
 
-            console.log('   📊 Статистика EOA:');
-            console.log(`      • Покупок: ${buyTrades.length} ($${totalBuyVolume.toFixed(2)})`);
-            console.log(`      • Продаж: ${sellTrades.length} ($${totalSellVolume.toFixed(2)})`);
-            console.log(`      • Объем: $${(totalBuyVolume + totalSellVolume).toFixed(2)}\n`);
+            console.log('   📊 EOA Statistics:');
+            console.log(`      • Buys: ${buyTrades.length} ($${totalBuyVolume.toFixed(2)})`);
+            console.log(`      • Sells: ${sellTrades.length} ($${totalSellVolume.toFixed(2)})`);
+            console.log(`      • Volume: $${(totalBuyVolume + totalSellVolume).toFixed(2)}\n`);
 
-            // Показываем последние 3 сделки
-            console.log('   📝 Последние 3 сделки:');
+            // Show last 3 trades
+            console.log('   📝 Last 3 trades:');
             eoaActivities.slice(0, 3).forEach((trade, idx) => {
                 const date = new Date(trade.timestamp * 1000);
                 console.log(`      ${idx + 1}. ${trade.side} - ${trade.title || 'Unknown'}`);
@@ -66,19 +66,19 @@ const checkProxyWallet = async () => {
             });
             console.log('');
         } else {
-            console.log('   ❌ Сделок не найдено на основном кошельке\n');
+            console.log('   ❌ No trades found on main wallet\n');
         }
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-        // 3. Проверяем активность на Proxy Wallet
-        console.log('🔎 ПРОВЕРКА АКТИВНОСТИ НА PROXY WALLET (КОНТРАКТ):\n');
+        // 3. Check activity on Proxy Wallet
+        console.log('🔎 CHECKING ACTIVITY ON PROXY WALLET (CONTRACT):\n');
         const proxyActivityUrl = `https://data-api.polymarket.com/activity?user=${PROXY_WALLET}&type=TRADE`;
         const proxyActivities: Activity[] = await fetchData(proxyActivityUrl);
 
-        console.log(`   Адрес: ${PROXY_WALLET}`);
-        console.log(`   Сделок: ${proxyActivities?.length || 0}`);
-        console.log(`   Профиль: https://polymarket.com/profile/${PROXY_WALLET}\n`);
+        console.log(`   Address: ${PROXY_WALLET}`);
+        console.log(`   Trades: ${proxyActivities?.length || 0}`);
+        console.log(`   Profile: https://polymarket.com/profile/${PROXY_WALLET}\n`);
 
         if (proxyActivities && proxyActivities.length > 0) {
             const buyTrades = proxyActivities.filter((a) => a.side === 'BUY');
@@ -86,13 +86,13 @@ const checkProxyWallet = async () => {
             const totalBuyVolume = buyTrades.reduce((sum, t) => sum + t.usdcSize, 0);
             const totalSellVolume = sellTrades.reduce((sum, t) => sum + t.usdcSize, 0);
 
-            console.log('   📊 Статистика Proxy Wallet:');
-            console.log(`      • Покупок: ${buyTrades.length} ($${totalBuyVolume.toFixed(2)})`);
-            console.log(`      • Продаж: ${sellTrades.length} ($${totalSellVolume.toFixed(2)})`);
-            console.log(`      • Объем: $${(totalBuyVolume + totalSellVolume).toFixed(2)}\n`);
+            console.log('   📊 Proxy Wallet Statistics:');
+            console.log(`      • Buys: ${buyTrades.length} ($${totalBuyVolume.toFixed(2)})`);
+            console.log(`      • Sells: ${sellTrades.length} ($${totalSellVolume.toFixed(2)})`);
+            console.log(`      • Volume: $${(totalBuyVolume + totalSellVolume).toFixed(2)}\n`);
 
-            // Показываем последние 3 сделки
-            console.log('   📝 Последние 3 сделки:');
+            // Show last 3 trades
+            console.log('   📝 Last 3 trades:');
             proxyActivities.slice(0, 3).forEach((trade, idx) => {
                 const date = new Date(trade.timestamp * 1000);
                 console.log(`      ${idx + 1}. ${trade.side} - ${trade.title || 'Unknown'}`);
@@ -102,109 +102,109 @@ const checkProxyWallet = async () => {
             });
             console.log('');
         } else {
-            console.log('   ❌ Сделок не найдено на proxy wallet\n');
+            console.log('   ❌ No trades found on proxy wallet\n');
         }
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-        // 4. Проверяем связь между адресами
-        console.log('🔗 СВЯЗЬ МЕЖДУ АДРЕСАМИ:\n');
+        // 4. Check connection between addresses
+        console.log('🔗 CONNECTION BETWEEN ADDRESSES:\n');
 
-        // Проверяем, есть ли поле proxyWallet в сделках
+        // Check if trades contain proxyWallet field
         if (eoaActivities && eoaActivities.length > 0) {
             const sampleTrade = eoaActivities[0];
-            console.log(`   EOA сделки содержат proxyWallet: ${sampleTrade.proxyWallet || 'N/A'}`);
+            console.log(`   EOA trades contain proxyWallet: ${sampleTrade.proxyWallet || 'N/A'}`);
         }
 
         if (proxyActivities && proxyActivities.length > 0) {
             const sampleTrade = proxyActivities[0];
             console.log(
-                `   Proxy сделки содержат proxyWallet: ${sampleTrade.proxyWallet || 'N/A'}`
+                `   Proxy trades contain proxyWallet: ${sampleTrade.proxyWallet || 'N/A'}`
             );
         }
 
-        console.log('\n   💡 КАК ЭТО РАБОТАЕТ:\n');
-        console.log('   1. EOA (Externally Owned Account) - ваш основной кошелек');
-        console.log('      • Контролируется приватным ключом');
-        console.log('      • Подписывает транзакции');
-        console.log('      • НЕ хранит средства на Polymarket\n');
+        console.log('\n   💡 HOW IT WORKS:\n');
+        console.log('   1. EOA (Externally Owned Account) - your main wallet');
+        console.log('      • Controlled by private key');
+        console.log('      • Signs transactions');
+        console.log('      • Does NOT store funds on Polymarket\n');
 
-        console.log('   2. Proxy Wallet - смарт-контракт кошелек');
-        console.log('      • Создается Polymarket автоматически');
-        console.log('      • Хранит USDC и токены позиций');
-        console.log('      • Выполняет сделки от имени EOA');
-        console.log('      • Связан с EOA через подпись\n');
+        console.log('   2. Proxy Wallet - smart contract wallet');
+        console.log('      • Created automatically by Polymarket');
+        console.log('      • Stores USDC and position tokens');
+        console.log('      • Executes trades on behalf of EOA');
+        console.log('      • Linked to EOA through signature\n');
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-        // 5. Определяем проблему
-        console.log('❓ ПОЧЕМУ НЕТ СТАТИСТИКИ НА ПРОФИЛЕ?\n');
+        // 5. Identify the problem
+        console.log('❓ WHY NO STATISTICS ON PROFILE?\n');
 
         const eoaHasTrades = eoaActivities && eoaActivities.length > 0;
         const proxyHasTrades = proxyActivities && proxyActivities.length > 0;
 
         if (!eoaHasTrades && proxyHasTrades) {
-            console.log('   🎯 НАЙДЕНА ПРОБЛЕМА!\n');
-            console.log('   Все сделки идут через Proxy Wallet, но статистика на Polymarket');
-            console.log('   может отображаться на профиле основного кошелька (EOA).\n');
+            console.log('   🎯 PROBLEM FOUND!\n');
+            console.log('   All trades go through Proxy Wallet, but statistics on Polymarket');
+            console.log('   may be displayed on the main wallet profile (EOA).\n');
 
-            console.log('   📊 ГДЕ СМОТРЕТЬ СТАТИСТИКУ:\n');
-            console.log(`   ✅ ПРАВИЛЬНЫЙ профиль (с торговлей):`);
+            console.log('   📊 WHERE TO VIEW STATISTICS:\n');
+            console.log(`   ✅ CORRECT profile (with trading):`);
             console.log(`      https://polymarket.com/profile/${PROXY_WALLET}\n`);
 
-            console.log(`   ❌ Профиль EOA (может быть пустым):`);
+            console.log(`   ❌ EOA profile (may be empty):`);
             console.log(`      https://polymarket.com/profile/${eoaAddress}\n`);
 
-            console.log('   💡 РЕШЕНИЕ:\n');
-            console.log('   Используйте адрес Proxy Wallet для просмотра статистики:');
+            console.log('   💡 SOLUTION:\n');
+            console.log('   Use Proxy Wallet address to view statistics:');
             console.log(`   ${PROXY_WALLET}\n`);
         } else if (eoaHasTrades && !proxyHasTrades) {
-            console.log('   Сделки идут через основной кошелек (EOA)');
-            console.log('   Статистика должна отображаться на профиле EOA\n');
+            console.log('   Trades go through main wallet (EOA)');
+            console.log('   Statistics should be displayed on EOA profile\n');
         } else if (eoaHasTrades && proxyHasTrades) {
-            console.log('   Сделки есть на обоих адресах!');
-            console.log('   Возможно, вы использовали разные кошельки\n');
+            console.log('   Trades exist on both addresses!');
+            console.log('   You may have used different wallets\n');
         } else {
-            console.log('   ❌ Сделок не найдено ни на одном адресе\n');
+            console.log('   ❌ No trades found on any address\n');
         }
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-        // 6. Проверяем через blockchain
-        console.log('🔗 ПРОВЕРКА В БЛОКЧЕЙНЕ:\n');
-        console.log(`   EOA (основной):`);
+        // 6. Check via blockchain
+        console.log('🔗 BLOCKCHAIN CHECK:\n');
+        console.log(`   EOA (main):`);
         console.log(`   https://polygonscan.com/address/${eoaAddress}\n`);
-        console.log(`   Proxy Wallet (контракт):`);
+        console.log(`   Proxy Wallet (contract):`);
         console.log(`   https://polygonscan.com/address/${PROXY_WALLET}\n`);
 
-        // Проверяем тип адреса через RPC
+        // Check address type via RPC
         try {
             const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 
             const eoaCode = await provider.getCode(eoaAddress);
             const proxyCode = await provider.getCode(PROXY_WALLET);
 
-            console.log('   🔍 Тип адресов:');
+            console.log('   🔍 Address types:');
             console.log(
-                `      EOA: ${eoaCode === '0x' ? '✅ Обычный кошелек (EOA)' : '⚠️  Смарт-контракт'}`
+                `      EOA: ${eoaCode === '0x' ? '✅ Regular wallet (EOA)' : '⚠️  Smart contract'}`
             );
             console.log(
-                `      Proxy: ${proxyCode === '0x' ? '❌ Обычный кошелек (ошибка!)' : '✅ Смарт-контракт (правильно)'}\n`
+                `      Proxy: ${proxyCode === '0x' ? '❌ Regular wallet (error!)' : '✅ Smart contract (correct)'}\n`
             );
         } catch (error) {
-            console.log('   ⚠️  Не удалось проверить тип адресов через RPC\n');
+            console.log('   ⚠️  Failed to check address types via RPC\n');
         }
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-        console.log('✅ ИТОГ:\n');
-        console.log('   Ваш бот использует PROXY_WALLET для торговли.');
-        console.log('   Это правильно и безопасно!\n');
-        console.log('   Статистика и графики должны отображаться на:');
+        console.log('✅ SUMMARY:\n');
+        console.log('   Your bot uses PROXY_WALLET for trading.');
+        console.log('   This is correct and safe!\n');
+        console.log('   Statistics and charts should be displayed at:');
         console.log(`   🔗 https://polymarket.com/profile/${PROXY_WALLET}\n`);
-        console.log('   Если там все еще нет графиков, это баг Polymarket UI.\n');
+        console.log('   If charts are still not there, this is a Polymarket UI bug.\n');
     } catch (error) {
-        console.error('❌ Ошибка:', error);
+        console.error('❌ Error:', error);
     }
 };
 

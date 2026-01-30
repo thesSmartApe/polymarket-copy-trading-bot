@@ -1,3 +1,4 @@
+import WebSocket from 'ws';
 import { ENV } from '../config/env';
 import { getUserActivityModel, getUserPositionModel } from '../models/userHistory';
 import fetchData from '../utils/fetchData';
@@ -5,7 +6,7 @@ import Logger from '../utils/logger';
 
 const USER_ADDRESSES = ENV.USER_ADDRESSES;
 const TOO_OLD_TIMESTAMP = ENV.TOO_OLD_TIMESTAMP;
-const FETCH_INTERVAL = ENV.FETCH_INTERVAL;
+const RTDS_URL = 'wss://ws-live-data.polymarket.com';
 
 if (!USER_ADDRESSES || USER_ADDRESSES.length === 0) {
     throw new Error('USER_ADDRESSES is not defined or empty');
@@ -17,6 +18,12 @@ const userModels = USER_ADDRESSES.map((address) => ({
     UserActivity: getUserActivityModel(address),
     UserPosition: getUserPositionModel(address),
 }));
+
+// WebSocket connection state
+let ws: WebSocket | null = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
+const RECONNECT_DELAY = 5000; // 5 seconds
 
 const init = async () => {
     const counts: number[] = [];
@@ -105,65 +112,78 @@ const init = async () => {
     Logger.tradersPositions(USER_ADDRESSES, positionCounts, positionDetails, profitabilities);
 };
 
-const fetchTradeData = async () => {
-    for (const { address, UserActivity, UserPosition } of userModels) {
+/**
+ * Process incoming trade activity from RTDS
+ */
+const processTradeActivity = async (activity: any, address: string) => {
+    console.log("🚀 ~ processTradeActivity ~ activity:", activity)
+    const { UserActivity, UserPosition } = userModels.find((m) => m.address === address) || {};
+
+    if (!UserActivity || !UserPosition) {
+        return;
+    }
+
+    try {
+        // Skip if too old
+        // Handle both timestamp formats: milliseconds or seconds
+        const activityTimestamp =
+            activity.timestamp > 1000000000000 ? activity.timestamp : activity.timestamp * 1000;
+        const hoursAgo = (Date.now() - activityTimestamp) / (1000 * 60 * 60);
+        if (hoursAgo > TOO_OLD_TIMESTAMP) {
+            return;
+        }
+
+        // Check if this trade already exists in database
+        const existingActivity = await UserActivity.findOne({
+            transactionHash: activity.transactionHash,
+        }).exec();
+
+        if (existingActivity) {
+            return; // Already processed this trade
+        }
+
+        // Save new trade to database
+        const newActivity = new UserActivity({
+            proxyWallet: activity.proxyWallet,
+            timestamp: activity.timestamp,
+            conditionId: activity.conditionId,
+            type: "TRADE",
+            size: activity.size,
+            usdcSize: activity.price * activity.size,
+            transactionHash: activity.transactionHash,
+            price: activity.price,
+            asset: activity.asset,
+            side: activity.side,
+            outcomeIndex: activity.outcomeIndex,
+            title: activity.title,
+            slug: activity.slug,
+            icon: activity.icon,
+            eventSlug: activity.eventSlug,
+            outcome: activity.outcome,
+            name: activity.name,
+            pseudonym: activity.pseudonym,
+            bio: activity.bio,
+            profileImage: activity.profileImage,
+            profileImageOptimized: activity.profileImageOptimized,
+            bot: false,
+            botExcutedTime: 0,
+        });
+
+        await newActivity.save();
+        Logger.info(`New trade detected for ${address.slice(0, 6)}...${address.slice(-4)}`);
+    } catch (error) {
+        Logger.error(
+            `Error processing trade activity for ${address.slice(0, 6)}...${address.slice(-4)}: ${error}`
+        );
+    }
+};
+
+/**
+ * Fetch and update positions (still using HTTP API as RTDS may not provide position updates)
+ */
+const updatePositions = async () => {
+    for (const { address, UserPosition } of userModels) {
         try {
-            // Fetch trade activities from Polymarket API
-            const apiUrl = `https://data-api.polymarket.com/activity?user=${address}&type=TRADE`;
-            const activities = await fetchData(apiUrl);
-
-            if (!Array.isArray(activities) || activities.length === 0) {
-                continue;
-            }
-
-            // Process each activity
-            for (const activity of activities) {
-                // Skip if too old
-                if (activity.timestamp < TOO_OLD_TIMESTAMP) {
-                    continue;
-                }
-
-                // Check if this trade already exists in database
-                const existingActivity = await UserActivity.findOne({
-                    transactionHash: activity.transactionHash,
-                }).exec();
-
-                if (existingActivity) {
-                    continue; // Already processed this trade
-                }
-
-                // Save new trade to database
-                const newActivity = new UserActivity({
-                    proxyWallet: activity.proxyWallet,
-                    timestamp: activity.timestamp,
-                    conditionId: activity.conditionId,
-                    type: activity.type,
-                    size: activity.size,
-                    usdcSize: activity.usdcSize,
-                    transactionHash: activity.transactionHash,
-                    price: activity.price,
-                    asset: activity.asset,
-                    side: activity.side,
-                    outcomeIndex: activity.outcomeIndex,
-                    title: activity.title,
-                    slug: activity.slug,
-                    icon: activity.icon,
-                    eventSlug: activity.eventSlug,
-                    outcome: activity.outcome,
-                    name: activity.name,
-                    pseudonym: activity.pseudonym,
-                    bio: activity.bio,
-                    profileImage: activity.profileImage,
-                    profileImageOptimized: activity.profileImageOptimized,
-                    bot: false,
-                    botExcutedTime: 0,
-                });
-
-                await newActivity.save();
-                Logger.info(`New trade detected for ${address.slice(0, 6)}...${address.slice(-4)}`);
-            }
-
-            // Also fetch and update positions
             const positionsUrl = `https://data-api.polymarket.com/positions?user=${address}`;
             const positions = await fetchData(positionsUrl);
 
@@ -205,7 +225,7 @@ const fetchTradeData = async () => {
             }
         } catch (error) {
             Logger.error(
-                `Error fetching data for ${address.slice(0, 6)}...${address.slice(-4)}: ${error}`
+                `Error updating positions for ${address.slice(0, 6)}...${address.slice(-4)}: ${error}`
             );
         }
     }
@@ -215,18 +235,125 @@ const fetchTradeData = async () => {
 let isFirstRun = true;
 // Track if monitor should continue running
 let isRunning = true;
+let positionUpdateInterval: NodeJS.Timeout | null = null;
+
+/**
+ * Connect to RTDS WebSocket and subscribe to trader activities
+ */
+const connectRTDS = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        try {
+            Logger.info(`Connecting to RTDS at ${RTDS_URL}...`);
+
+            ws = new WebSocket(RTDS_URL);
+
+            ws.on('open', () => {
+                Logger.success('RTDS WebSocket connected');
+                reconnectAttempts = 0;
+
+                // Subscribe to activity/trades for each trader address
+                const subscriptions = USER_ADDRESSES.map((address) => ({
+                    topic: 'activity',
+                    type: 'trades',
+                    // gamma_auth: {
+                    //     address: address,
+                    // },
+                }));
+
+                const subscribeMessage = {
+                    action: 'subscribe',
+                    subscriptions: subscriptions,
+                };
+
+                ws?.send(JSON.stringify(subscribeMessage));
+                Logger.success(
+                    `Subscribed to RTDS for ${USER_ADDRESSES.length} trader(s) - monitoring in real-time`
+                );
+                resolve();
+            });
+
+            ws.on('message', async (data: WebSocket.Data) => {
+                try {
+                    const message = JSON.parse(data.toString());
+                    // Handle subscription confirmation
+                    if (message.action === 'subscribed' || message.status === 'subscribed') {
+                        Logger.info('RTDS subscription confirmed');
+                        return;
+                    }
+
+                    // Handle trade activity messages
+                    if (message.topic === 'activity' && message.type === 'trades' && message.payload) {
+                        const activity = message.payload;
+                        const traderAddress = activity.proxyWallet;
+
+                        if (traderAddress && USER_ADDRESSES.includes(traderAddress.toLowerCase())) {
+                            await processTradeActivity(activity, traderAddress.toLowerCase());
+                        }
+                    }
+                } catch (error) {
+                    Logger.error(`Error processing RTDS message: ${error}`);
+                }
+            });
+
+            ws.on('error', (error: any) => {
+                Logger.error(`RTDS WebSocket error: ${error.message}`);
+                if (ws?.readyState === WebSocket.OPEN) {
+                    ws.close();
+                }
+            });
+
+            ws.on('close', (code: any, reason: any) => {
+                Logger.warning(`RTDS WebSocket closed (code: ${code}, reason: ${reason.toString()})`);
+
+                // Attempt to reconnect if still running
+                if (isRunning && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                    reconnectAttempts++;
+                    const delay = RECONNECT_DELAY * Math.min(reconnectAttempts, 5); // Max 25 seconds
+                    Logger.info(
+                        `Reconnecting to RTDS in ${delay / 1000}s (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
+                    );
+
+                    setTimeout(() => {
+                        if (isRunning) {
+                            connectRTDS().catch((err) => {
+                                Logger.error(`Failed to reconnect to RTDS: ${err}`);
+                            });
+                        }
+                    }, delay);
+                } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                    Logger.error(
+                        `Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Please restart the bot.`
+                    );
+                }
+            });
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
 
 /**
  * Stop the trade monitor gracefully
  */
 export const stopTradeMonitor = () => {
     isRunning = false;
+
+    if (positionUpdateInterval) {
+        clearInterval(positionUpdateInterval);
+        positionUpdateInterval = null;
+    }
+
+    if (ws) {
+        ws.close();
+        ws = null;
+    }
+
     Logger.info('Trade monitor shutdown requested...');
 };
 
 const tradeMonitor = async () => {
     await init();
-    Logger.success(`Monitoring ${USER_ADDRESSES.length} trader(s) every ${FETCH_INTERVAL}s`);
+    Logger.success(`Monitoring ${USER_ADDRESSES.length} trader(s) using RTDS (Real-Time Data Stream)`);
     Logger.separator();
 
     // On first run, mark all existing historical trades as already processed
@@ -248,10 +375,25 @@ const tradeMonitor = async () => {
         Logger.separator();
     }
 
-    while (isRunning) {
-        await fetchTradeData();
-        if (!isRunning) break;
-        await new Promise((resolve) => setTimeout(resolve, FETCH_INTERVAL * 1000));
+    // Connect to RTDS
+    try {
+        await connectRTDS();
+
+        // Update positions periodically (every 30 seconds) since RTDS may not provide position updates
+        positionUpdateInterval = setInterval(async () => {
+            if (isRunning) {
+                await updatePositions();
+            }
+        }, 30000); // Update positions every 30 seconds
+
+        // Keep the process alive
+        while (isRunning) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+    } catch (error) {
+        Logger.error(`Failed to connect to RTDS: ${error}`);
+        Logger.error('Falling back to HTTP polling is not implemented. Please check your connection.');
+        throw error;
     }
 
     Logger.info('Trade monitor stopped');

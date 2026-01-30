@@ -107,7 +107,7 @@ const redeemPosition = async (
 };
 
 const logPositionHeader = (position: Position, index: number, total: number) => {
-    const status = position.curPrice >= RESOLVED_HIGH ? '🎉 ПОБЕДА' : '❌ ПРОИГРЫШ';
+    const status = position.curPrice >= RESOLVED_HIGH ? '🎉 WIN' : '❌ LOSS';
     console.log(
         `\n${index + 1}/${total} ▶ ${status} | ${position.title || position.slug || position.asset}`
     );
@@ -121,12 +121,12 @@ const logPositionHeader = (position: Position, index: number, total: number) => 
 };
 
 const main = async () => {
-    console.log('🚀 Погашение разрешённых позиций (Redeem Resolved Positions)');
+    console.log('🚀 Redeeming resolved positions');
     console.log('════════════════════════════════════════════════════');
     console.log(`Wallet: ${PROXY_WALLET}`);
     console.log(`CTF Contract: ${CTF_CONTRACT_ADDRESS}`);
-    console.log(`Порог для победы: цена >= $${RESOLVED_HIGH}`);
-    console.log(`Порог для проигрыша: цена <= $${RESOLVED_LOW}`);
+    console.log(`Win threshold: price >= $${RESOLVED_HIGH}`);
+    console.log(`Loss threshold: price <= $${RESOLVED_LOW}`);
 
     // Setup provider and signer
     const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
@@ -165,18 +165,18 @@ const main = async () => {
         (pos) => pos.curPrice > RESOLVED_LOW && pos.curPrice < RESOLVED_HIGH
     );
 
-    console.log(`\n📊 Статистика позиций:`);
-    console.log(`   Всего позиций: ${allPositions.length}`);
-    console.log(`   ✅ Разрешённые и погашаемые: ${redeemablePositions.length}`);
-    console.log(`   ⏳ Активные (не трогаем): ${activePositions.length}`);
+    console.log(`\n📊 Position statistics:`);
+    console.log(`   Total positions: ${allPositions.length}`);
+    console.log(`   ✅ Resolved and redeemable: ${redeemablePositions.length}`);
+    console.log(`   ⏳ Active (not touching): ${activePositions.length}`);
 
     if (redeemablePositions.length === 0) {
-        console.log('\n✅ Нет позиций для погашения.');
+        console.log('\n✅ No positions to redeem.');
         return;
     }
 
-    console.log(`\n🔄 Погашаем ${redeemablePositions.length} позиций...`);
-    console.log(`⚠️  ВНИМАНИЕ: Каждое погашение требует gas fees на Polygon`);
+    console.log(`\n🔄 Redeeming ${redeemablePositions.length} positions...`);
+    console.log(`⚠️  WARNING: Each redemption requires gas fees on Polygon`);
 
     let successCount = 0;
     let failCount = 0;
@@ -191,7 +191,7 @@ const main = async () => {
     });
 
     console.log(
-        `\n📦 Сгруппировано в ${positionsByCondition.size} уникальных условий (conditions)`
+        `\n📦 Grouped into ${positionsByCondition.size} unique conditions`
     );
 
     let conditionIndex = 0;
@@ -202,8 +202,8 @@ const main = async () => {
         console.log(`\n${'='.repeat(60)}`);
         console.log(`Condition ${conditionIndex}/${positionsByCondition.size}`);
         console.log(`Condition ID: ${conditionId}`);
-        console.log(`Позиций в этом условии: ${positions.length}`);
-        console.log(`Общая ожидаемая стоимость: $${totalPositionValue.toFixed(2)}`);
+        console.log(`Positions in this condition: ${positions.length}`);
+        console.log(`Total expected value: $${totalPositionValue.toFixed(2)}`);
 
         // Show all positions for this condition
         positions.forEach((pos, idx) => {
@@ -231,11 +231,11 @@ const main = async () => {
     }
 
     console.log('\n════════════════════════════════════════════════════');
-    console.log('✅ Итог погашения позиций');
-    console.log(`Условий обработано: ${positionsByCondition.size}`);
-    console.log(`Успешных погашений: ${successCount}`);
-    console.log(`Неудачных: ${failCount}`);
-    console.log(`Ожидаемая стоимость погашенных позиций: $${totalValue.toFixed(2)}`);
+    console.log('✅ Summary of position redemption');
+    console.log(`Conditions processed: ${positionsByCondition.size}`);
+    console.log(`Successful redemptions: ${successCount}`);
+    console.log(`Failed: ${failCount}`);
+    console.log(`Expected value of redeemed positions: $${totalValue.toFixed(2)}`);
     console.log('════════════════════════════════════════════════════\n');
 };
 

@@ -1,6 +1,6 @@
 # 🚀 Quick Start Guide
 
-Get your Polymarket copy trading bot running in **5 minutes**. This guide walks you through the essential setup steps to start copying trades from top performers.
+Get your Jerrix Polymarket Copy Bot running in **5 minutes**. This guide walks you through the essential setup steps to start copying trades from top performers.
 
 ## What You'll Need
 
@@ -23,7 +23,7 @@ Before starting, ensure you have:
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd polymarket-copy-trading-bot-v1
+cd polymarket-copy-trading-bot
 
 # Install packages
 npm install

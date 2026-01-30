@@ -3,7 +3,6 @@ import { ENV } from './config/env';
 import createClobClient from './utils/createClobClient';
 import tradeExecutor, { stopTradeExecutor } from './services/tradeExecutor';
 import tradeMonitor, { stopTradeMonitor } from './services/tradeMonitor';
-import autoResolver, { stopAutoResolver } from './services/autoResolver';
 import Logger from './utils/logger';
 import { performHealthCheck, logHealthCheck } from './utils/healthCheck';
 import test from './test/test';
@@ -28,7 +27,6 @@ const gracefulShutdown = async (signal: string) => {
         // Stop services
         stopTradeMonitor();
         stopTradeExecutor();
-        stopAutoResolver();
 
         // Give services time to finish current operations
         Logger.info('Waiting for services to finish current operations...');
@@ -66,6 +64,17 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 export const main = async () => {
     try {
+        // Welcome message for first-time users
+        const colors = {
+            reset: '\x1b[0m',
+            yellow: '\x1b[33m',
+            cyan: '\x1b[36m',
+        };
+        
+        console.log(`\n${colors.yellow}💡 First time running the bot?${colors.reset}`);
+        console.log(`   Read the guide: ${colors.cyan}GETTING_STARTED.md${colors.reset}`);
+        console.log(`   Run health check: ${colors.cyan}npm run health-check${colors.reset}\n`);
+        
         await connectDB();
         Logger.startup(USER_ADDRESSES, PROXY_WALLET);
 
@@ -88,9 +97,6 @@ export const main = async () => {
 
         Logger.info('Starting trade executor...');
         tradeExecutor(clobClient);
-
-        Logger.info('Starting auto resolver...');
-        autoResolver(clobClient);
 
         // test(clobClient);
     } catch (error) {

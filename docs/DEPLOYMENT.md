@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers deploying the Polymarket Copy Trading Bot to production environments.
+This guide covers deploying the Jerrix Polymarket Copy Bot to production environments.
 
 ## Prerequisites
 
@@ -81,7 +81,7 @@ npm run build
 
 ```ini
 [Unit]
-Description=Polymarket Copy Trading Bot
+Description=Jerrix Polymarket Copy Bot
 After=network.target mongod.service
 
 [Service]

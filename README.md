@@ -1,212 +1,177 @@
-# Polymarket Copy Trading Bot
+# Jerrix Polymarket Copy Trading Bot
 
-> **Copy the best, automate success.** Mirror trades from top Polymarket traders with intelligent position sizing and real-time execution.
+> Automated copy trading bot for Polymarket that mirrors trades from top performers (e.g. **gabagool22**) with intelligent position sizing and real-time execution. By [@jerrix1](https://t.me/jerrix1).
 
-<img src="docs/trader analysis.png"/>
-<img src="docs/settings.png"/>
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 
-## Why This Bot?
+## Overview
 
-A copy trading bot for Polymarket that prioritizes transparency, flexibility, and real-time execution. Unlike manual trading or basic scripts, this bot offers complete automation with intelligent position sizing.
+The Jerrix Polymarket Copy Trading Bot automatically replicates trades from successful Polymarket traders to your wallet. It monitors trader activity 24/7, calculates proportional position sizes based on your capital, and executes matching orders in real-time. Following successful traders like **gabagool22** has been proven to work with this bot.
 
-### Key Features
+### How It Works
 
-| Feature | Description |
-|---------|-------------|
-| 🖥️ Web Dashboard | Full-featured web interface for analytics, trading, and configuration |
-| 📍 Position Tracking | Accurate tracking of purchases and sells across balance changes |
-| ⚡ Real-time Execution | Monitors trades every second and executes instantly |
-| 🔄 Trade Aggregation | Combine multiple small trades into larger executable orders |
-| 👥 Multi-Trader Support | Track and copy trades from multiple traders simultaneously |
-| 📊 Smart Position Sizing | Automatically scales trades based on your capital vs trader's balance |
-| 📈 Tiered Multipliers | Apply different multipliers based on trade size ranges |
-| 💾 MongoDB Integration | Persistent storage of all trades and positions |
-| 🐳 Docker Support | Production-ready deployment with Docker Compose |
-
----
+1. **Select Traders** - Choose top performers from [Polymarket leaderboard](https://polymarket.com/leaderboard) or [Predictfolio](https://predictfolio.com) (e.g. gabagool22)
+2. **Monitor Activity** - Bot continuously watches for new positions opened by selected traders using Polymarket Data API
+3. **Calculate Size** - Automatically scales trades based on your balance vs. trader's balance
+4. **Execute Orders** - Places matching orders on Polymarket using your wallet
+5. **Track Performance** - Maintains complete trade history in MongoDB
 
 ## Quick Start
-
-```bash
-# Clone and install
-git clone <repository-url>
-cd polymarket-copy-trading-bot-v1
-npm install
-
-# Configure
-cp .env.example .env
-# Edit .env with your wallet, traders, MongoDB, RPC
-
-# Run
-npm run build
-npm run web     # Web interface at http://localhost:3000
-npm start       # Or terminal mode
-```
-
-📖 **[Detailed Setup Guide →](./docs/QUICK_START.md)**
-
----
-
-## Web Interface
-
-The bot includes a full web dashboard at `http://localhost:3000` with three main views:
-
-### Traders Analytics
-
-- P&L and ROI charts for all tracked traders
-- Monthly and daily performance trends
-- Volume analysis and win rate statistics
-- Sortable table with detailed metrics
-
-<img src="docs/trader overview .png"/>
-
-**Example trader:** Check performance on [Predictfolio](https://predictfolio.com/dashboard/0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b)
-
-### My Trades
-
-- Your copy trading performance and P&L
-- Trade history with market details
-- Position tracking across all markets
-
-### Settings
-
-- **Traders Management** — Add/remove traders to copy
-- **Copy Strategy** — Configure PERCENTAGE/FIXED/ADAPTIVE mode, multipliers, tiered sizing
-- **Safety Limits** — Set max/min order sizes, position limits, daily volume caps
-- **Bot Settings** — Fetch interval, preview mode, trade aggregation
-- **Wallet Info** — View balances (USDC, MATIC)
-- **Quick Actions** — Health check, stats, close resolved positions, manual sell
-
-All settings are saved to `.env` file. Restart the bot to apply changes.
-
----
-
-## Installation
 
 ### Prerequisites
 
 - Node.js v18+
-- MongoDB (Atlas recommended)
-- Polygon wallet with USDC
-- POL (MATIC) for gas (~$5-10)
+- MongoDB database ([MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) free tier works)
+- Polygon wallet with USDC and POL/MATIC for gas
+- RPC endpoint ([Infura](https://infura.io) or [Alchemy](https://www.alchemy.com) free tier)
 
-### Standard Setup
+### Installation
 
 ```bash
-git clone <repository-url>
-cd polymarket-copy-trading-bot-v1
+# Clone repository
+git clone https://github.com/thesSmartApe/polymarket-copy-trading-bot.git
+cd polymarket-copy-trading-bot
+
+# Install dependencies
 npm install
-cp .env.example .env
-```
 
-Edit `.env`:
+# Run interactive setup wizard
+npm run setup
 
-```bash
-USER_ADDRESSES = '0xTrader1, 0xTrader2'
-PROXY_WALLET = 'your_polygon_wallet'
-PRIVATE_KEY = 'your_private_key'
-MONGO_URI = 'mongodb+srv://...'
-RPC_URL = 'https://polygon-mainnet.infura.io/v3/...'
-```
-
-```bash
+# Build and start
 npm run build
-npm run web     # Web interface
-npm start       # Terminal mode
+npm run health-check  # Verify configuration
+npm start             # Start trading
 ```
 
-### Docker
+**📖 For detailed setup instructions, see [Getting Started Guide](./docs/GETTING_STARTED.md)**
 
-```bash
-cp .env.docker.example .env.docker
-export $(cat .env.docker | grep -v '^#' | xargs)
-docker-compose up -d
-```
+## Features
 
-📖 **[Docker Guide →](./docs/DOCKER.md)**
+- **Multi-Trader Support** - Track and copy trades from multiple traders simultaneously
+- **Smart Position Sizing** - Automatically adjusts trade sizes based on your capital
+- **Tiered Multipliers** - Apply different multipliers based on trade size
+- **Position Tracking** - Accurately tracks purchases and sells even after balance changes
+- **Trade Aggregation** - Combines multiple small trades into larger executable orders
+- **Real-time Execution** - Monitors trades every second and executes instantly
+- **MongoDB Integration** - Persistent storage of all trades and positions
+- **Price Protection** - Built-in slippage checks to avoid unfavorable fills
 
----
+### Other Bots by Jerrix
+
+I've also built **Rust** and **Python** copy trading bots for Polymarket. This Node.js/TypeScript bot is part of the same ecosystem—following successful traders like **gabagool22** has succeeded across all of them.
 
 ## Configuration
 
-| Variable                    | Description                       | Default    |
-| --------------------------- | --------------------------------- | ---------- |
-| `USER_ADDRESSES`            | Traders to copy (comma-separated) | —          |
-| `PROXY_WALLET`              | Your Polygon wallet               | —          |
-| `PRIVATE_KEY`               | Wallet private key                | —          |
-| `MONGO_URI`                 | MongoDB connection string         | —          |
-| `RPC_URL`                   | Polygon RPC endpoint              | —          |
-| `COPY_STRATEGY`             | PERCENTAGE / FIXED / ADAPTIVE     | PERCENTAGE |
-| `COPY_SIZE`                 | Copy size (% or USD)              | 10         |
-| `TRADE_MULTIPLIER`          | Position size multiplier          | 1.0        |
-| `TIERED_MULTIPLIERS`        | Size-based multipliers            | —          |
-| `MAX_ORDER_SIZE_USD`        | Maximum order size                | 100        |
-| `MIN_ORDER_SIZE_USD`        | Minimum order size                | 1          |
-| `PREVIEW_MODE`              | Simulate without trading          | false      |
-| `TRADE_AGGREGATION_ENABLED` | Combine small trades              | false      |
+### Essential Variables
 
-See `.env.example` for full configuration options.
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `USER_ADDRESSES` | Traders to copy (comma-separated) | `'0x6031b6eed1c97e853c6e0f03ad3ce3529351f96d'` (gabagool22) |
+| `PROXY_WALLET` | Your Polygon wallet address | `'0x123...'` |
+| `PRIVATE_KEY` | Wallet private key (no 0x prefix) | `'abc123...'` |
+| `MONGO_URI` | MongoDB connection string | `'mongodb+srv://...'` |
+| `RPC_URL` | Polygon RPC endpoint | `'https://polygon...'` |
+| `TRADE_MULTIPLIER` | Position size multiplier (default: 1.0) | `2.0` |
+| `FETCH_INTERVAL` | Check interval in seconds (default: 1) | `1` |
 
----
+### Finding Traders
 
-## CLI Commands
+1. Visit [Polymarket Leaderboard](https://polymarket.com/leaderboard)
+2. Look for traders with positive P&L, win rate >55%, and active trading history (e.g. **gabagool22**)
+3. Verify detailed stats on [Predictfolio](https://predictfolio.com)
+4. Add wallet addresses to `USER_ADDRESSES`
 
-<img src="./docs/cli.png"/>
+**📖 For complete configuration guide, see [Quick Start](./docs/QUICK_START.md)**
+
+## Docker Deployment
+
+Deploy with Docker Compose for a production-ready setup:
 
 ```bash
-npm run web              # Start web interface
-npm start                # Start copy trading bot
-npm run analyze          # Analyze tracked traders
-npm run analyze:my       # Analyze your trades
-npm run health           # System health check
-npm run stats            # View positions and P&L
-npm run close:resolved   # Close resolved market positions
-npm run redeem           # Redeem winning positions
-npm run close:stale      # Close old inactive positions
+# Configure and start
+cp .env.example .env
+docker-compose up -d
+
+# View logs
+docker-compose logs -f polymarket
 ```
 
----
+**📖 [Complete Docker Guide →](./docs/DOCKER.md)**
+
+## Safety & Risk Management
+
+⚠️ **Important Disclaimers:**
+
+- **Use at your own risk** - This bot executes real trades with real money
+- **Start small** - Test with minimal funds before scaling up
+- **Diversify** - Don't copy only one trader; track multiple strategies
+- **Monitor regularly** - Check bot logs daily to ensure proper execution
+- **No guarantees** - Past performance doesn't guarantee future results
+
+### Best Practices
+
+1. Use a dedicated wallet separate from your main funds
+2. Only allocate capital you can afford to lose
+3. Research traders thoroughly before copying
+4. Set up monitoring and alerts
+5. Know how to stop the bot quickly (Ctrl+C)
 
 ## Documentation
 
-- **[Quick Start Guide](./docs/QUICK_START.md)** — Get running in 5 minutes
-- **[Docker Guide](./docs/DOCKER.md)** — Production deployment
-- **[Multi-Trader Guide](./docs/MULTI_TRADER_GUIDE.md)** — Advanced multi-trader setup
-- **[Tiered Multipliers Guide](./docs/TIERED_MULTIPLIERS.md)** — Size-based multiplier configuration
-- **[Position Tracking](./docs/POSITION_TRACKING.md)** — How position tracking works
-- **[Simulation Guide](./docs/SIMULATION_GUIDE.md)** — Backtest strategies
-- **[Funding Guide](./docs/FUNDING_GUIDE.md)** — How to fund your wallet
+### Getting Started
+- **[🚀 Getting Started Guide](./docs/GETTING_STARTED.md)** - Complete beginner's guide
+- **[⚡ Quick Start](./docs/QUICK_START.md)** - Fast setup for experienced users
 
----
+### Advanced Guides
+- **[🐳 Docker Deployment](./docs/DOCKER.md)** - Container deployment
+- **[👥 Multi-Trader Guide](./docs/MULTI_TRADER_GUIDE.md)** - Copy multiple traders
+- **[📍 Position Tracking](./docs/POSITION_TRACKING.md)** - How tracking works
+- **[💰 Funding Guide](./docs/FUNDING_GUIDE.md)** - Wallet funding instructions
 
-## Safety
+### Testing & Analysis
+- **[🧪 Simulation Guide](./docs/SIMULATION_GUIDE.md)** - Backtest strategies
+- **[🔬 Simulation Runner](./docs/SIMULATION_RUNNER_GUIDE.md)** - Advanced backtesting
 
-⚠️ **Use at your own risk.** This bot executes real trades with real money.
+## Troubleshooting
 
-**Best Practices:**
+### Common Issues
 
-- Use a dedicated wallet with limited funds
-- Start with `PREVIEW_MODE=true` to test
-- Research traders before copying
-- Monitor the bot regularly
-- Set appropriate safety limits
+**Missing environment variables** → Run `npm run setup` to create `.env` file
 
----
+**MongoDB connection failed** → Verify `MONGO_URI`, whitelist IP in MongoDB Atlas
+
+**Bot not detecting trades** → Verify trader addresses and check recent activity
+
+**Insufficient balance** → Add USDC to wallet and ensure POL/MATIC for gas fees
+
+**Run health check:** `npm run health-check`
+
+**📖 For detailed troubleshooting, see [Quick Start Guide](./docs/QUICK_START.md)**
 
 ## Contributing
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/name`)
-3. Commit changes (`git commit -m 'Add feature'`)
-4. Push to branch (`git push origin feature/name`)
-5. Open Pull Request
+Contributions are welcome! Please:
 
----
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-Educational and research purposes. Users responsible for compliance with local laws and Polymarket ToS.
+ISC License - See [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built on [Polymarket CLOB Client](https://github.com/Polymarket/clob-client)
+- Uses [Predictfolio](https://predictfolio.com) for trader analytics
+- Powered by Polygon network
 
 ---
 
-**Disclaimer:** Trading involves risk of loss. Developers not responsible for financial losses.
+**Disclaimer:** This software is for educational purposes only. Trading involves risk of loss. The developers are not responsible for any financial losses incurred while using this bot.
+
+**Contact:** jerrix1 — Telegram: [@jerrix1](https://t.me/jerrix1)

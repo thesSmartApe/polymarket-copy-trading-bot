@@ -1,6 +1,6 @@
 # Docker Deployment Guide
 
-Complete guide for deploying the Polymarket Copy Trading Bot using Docker and Docker Compose.
+Complete guide for deploying the Jerrix Polymarket Copy Bot using Docker and Docker Compose.
 
 ## Table of Contents
 

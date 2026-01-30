@@ -62,7 +62,7 @@ PRIVATE_KEY = 'your_private_key_without_0x'
 When starting the bot:
 
 ```
-🤖 Polymarket Copy Trading Bot Starting...
+🤖 Jerrix Polymarket Copy Bot Starting...
 
 📊 Tracking 3 trader(s):
    1. 0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b
@@ -185,5 +185,5 @@ MongoDB Collections:
 
 For questions or issues:
 
-- GitHub Issues: [Create an issue](https://github.com/your-repo/issues)
-- Telegram: https://t.me/trust4120
+- GitHub Issues: [Create an issue](https://github.com/thesSmartApe/polymarket-copy-trading-bot/issues)
+- Telegram: https://t.me/jerrix1 (contact: jerrix1)

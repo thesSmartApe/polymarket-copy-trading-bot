@@ -1,6 +1,6 @@
 # 💰 Wallet Funding & Setup Guide
 
-This guide will help you set up your wallet with the necessary funds and permissions to run the Polymarket Copy Trading Bot.
+This guide will help you set up your wallet with the necessary funds and permissions to run the Jerrix Polymarket Copy Bot.
 
 ## Your Wallet Address
 

@@ -285,6 +285,7 @@ const tradeExecutor = async (clobClient: ClobClient) => {
     let lastCheck = Date.now();
     while (isRunning) {
         const trades = await readTempTrades();
+        console.log("🚀 ~ tradeExecutor ~ trades:", trades)
 
         if (TRADE_AGGREGATION_ENABLED) {
             // Process with aggregation logic
@@ -296,6 +297,7 @@ const tradeExecutor = async (clobClient: ClobClient) => {
 
                 // Add trades to aggregation buffer
                 for (const trade of trades) {
+                    console.log("🚀 ~ tradeExecutor ~ trade:", trade)
                     // Only aggregate BUY trades below minimum threshold
                     if (trade.side === 'BUY' && trade.usdcSize < TRADE_AGGREGATION_MIN_TOTAL_USD) {
                         Logger.info(

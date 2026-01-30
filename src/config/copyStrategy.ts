@@ -145,7 +145,7 @@ export function calculateOrderSize(
     if (finalAmount < config.minOrderSizeUSD) {
         belowMinimum = true;
         reasoning += ` → Below minimum $${config.minOrderSizeUSD}`;
-        finalAmount = 0; // Don't execute
+        finalAmount = config.minOrderSizeUSD;
     }
 
     return {
