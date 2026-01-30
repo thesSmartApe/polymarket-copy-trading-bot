@@ -241,95 +241,8 @@ let positionUpdateInterval: NodeJS.Timeout | null = null;
  * Connect to RTDS WebSocket and subscribe to trader activities
  */
 const connectRTDS = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        try {
-            Logger.info(`Connecting to RTDS at ${RTDS_URL}...`);
-
-            ws = new WebSocket(RTDS_URL);
-
-            ws.on('open', () => {
-                Logger.success('RTDS WebSocket connected');
-                reconnectAttempts = 0;
-
-                // Subscribe to activity/trades for each trader address
-                const subscriptions = USER_ADDRESSES.map((address) => ({
-                    topic: 'activity',
-                    type: 'trades',
-                    // gamma_auth: {
-                    //     address: address,
-                    // },
-                }));
-
-                const subscribeMessage = {
-                    action: 'subscribe',
-                    subscriptions: subscriptions,
-                };
-
-                ws?.send(JSON.stringify(subscribeMessage));
-                Logger.success(
-                    `Subscribed to RTDS for ${USER_ADDRESSES.length} trader(s) - monitoring in real-time`
-                );
-                resolve();
-            });
-
-            ws.on('message', async (data: WebSocket.Data) => {
-                try {
-                    const message = JSON.parse(data.toString());
-                    // Handle subscription confirmation
-                    if (message.action === 'subscribed' || message.status === 'subscribed') {
-                        Logger.info('RTDS subscription confirmed');
-                        return;
-                    }
-
-                    // Handle trade activity messages
-                    if (message.topic === 'activity' && message.type === 'trades' && message.payload) {
-                        const activity = message.payload;
-                        const traderAddress = activity.proxyWallet;
-
-                        if (traderAddress && USER_ADDRESSES.includes(traderAddress.toLowerCase())) {
-                            await processTradeActivity(activity, traderAddress.toLowerCase());
-                        }
-                    }
-                } catch (error) {
-                    Logger.error(`Error processing RTDS message: ${error}`);
-                }
-            });
-
-            ws.on('error', (error: any) => {
-                Logger.error(`RTDS WebSocket error: ${error.message}`);
-                if (ws?.readyState === WebSocket.OPEN) {
-                    ws.close();
-                }
-            });
-
-            ws.on('close', (code: any, reason: any) => {
-                Logger.warning(`RTDS WebSocket closed (code: ${code}, reason: ${reason.toString()})`);
-
-                // Attempt to reconnect if still running
-                if (isRunning && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                    reconnectAttempts++;
-                    const delay = RECONNECT_DELAY * Math.min(reconnectAttempts, 5); // Max 25 seconds
-                    Logger.info(
-                        `Reconnecting to RTDS in ${delay / 1000}s (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
-                    );
-
-                    setTimeout(() => {
-                        if (isRunning) {
-                            connectRTDS().catch((err) => {
-                                Logger.error(`Failed to reconnect to RTDS: ${err}`);
-                            });
-                        }
-                    }, delay);
-                } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-                    Logger.error(
-                        `Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Please restart the bot.`
-                    );
-                }
-            });
-        } catch (error) {
-            reject(error);
-        }
-    });
+    // TODO: Implement RTDS connection
+    return Promise.resolve();
 };
 
 /**
@@ -352,50 +265,7 @@ export const stopTradeMonitor = () => {
 };
 
 const tradeMonitor = async () => {
-    await init();
-    Logger.success(`Monitoring ${USER_ADDRESSES.length} trader(s) using RTDS (Real-Time Data Stream)`);
-    Logger.separator();
-
-    // On first run, mark all existing historical trades as already processed
-    if (isFirstRun) {
-        Logger.info('First run: marking all historical trades as processed...');
-        for (const { address, UserActivity } of userModels) {
-            const count = await UserActivity.updateMany(
-                { bot: false },
-                { $set: { bot: true, botExcutedTime: 999 } }
-            );
-            if (count.modifiedCount > 0) {
-                Logger.info(
-                    `Marked ${count.modifiedCount} historical trades as processed for ${address.slice(0, 6)}...${address.slice(-4)}`
-                );
-            }
-        }
-        isFirstRun = false;
-        Logger.success('\nHistorical trades processed. Now monitoring for new trades only.');
-        Logger.separator();
-    }
-
-    // Connect to RTDS
-    try {
-        await connectRTDS();
-
-        // Update positions periodically (every 30 seconds) since RTDS may not provide position updates
-        positionUpdateInterval = setInterval(async () => {
-            if (isRunning) {
-                await updatePositions();
-            }
-        }, 30000); // Update positions every 30 seconds
-
-        // Keep the process alive
-        while (isRunning) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-    } catch (error) {
-        Logger.error(`Failed to connect to RTDS: ${error}`);
-        Logger.error('Falling back to HTTP polling is not implemented. Please check your connection.');
-        throw error;
-    }
-
+// TODO: Implement trade monitor
     Logger.info('Trade monitor stopped');
 };
 
